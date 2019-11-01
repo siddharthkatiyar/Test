@@ -1,0 +1,827 @@
+Chrome-Install-1.pac
+
+<<<<<<< HEAD
+/*
+ @GIT$Format:[%h] %ci %cn - %s$
+
+ Jenkins Continuous Integration Pipeline as Code script to run the Chrome
+ install 
+
+ Author
+  Evangelo Rosal with reference from Craig Butler's patterns
+
+ Usage
+  Called by the Jenkins CI platform agent(s)
+*/
+
+/* Powershell script to install chrome.exe
+$Path = $env:TEMP; $Installer = "chrome_installer.exe"; Invoke-WebRequest "http://dl.google.com/chrome/install/375.126/chrome_installer.exe" -OutFile $Path\$Installer; Start-Process -FilePath $Path\$Installer -Args "/silent /install" -Verb RunAs -Wait; Remove-Item $Path\$Installer
+*/
+
+// Load common variables & functions
+def common = 'jenkins/lib/testCommon.groovy'
+def saveWorkspace = ''
+
+// Artifactory connection required for the build process
+def artifactoryRep = 'mebank-software-releases-local'
+def softwarePackage = 'Chrome_Windows_64'
+def chromeDirectory = 'D:\\Applications\\Chrome'
+
+pipeline {
+	agent { node { label "${tasAgent}" } } 
+
+	stages {
+		// Initialise & remove temporary files & folders before starting
+		stage ('Init') {
+			steps {
+				script {
+					saveWorkspace = "${WORKSPACE}"
+					common = load common						// Load common functions & variables
+
+					artServer = Artifactory.server "${artifactoryServer}"
+					artServer.credentialsId = artifactoryCredentials
+
+					echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL} - Workspace ${saveWorkspace}"
+				}
+			}
+		}
+
+		// Setup directory 
+		stage ('Setup Chrome Base') {
+			steps {
+				dir ("${saveWorkspace}") {
+					script {
+						// Use Powershell to delete & create Chrome directories (base & working)
+						powershell(returnStatus: true, returnStderr: true, script: "Remove-Item -Path ${chromeDirectory} \
+						  -Recurse -Force -ErrorAction SilentlyContinue")
+
+						powershell(returnStatus: true, returnStdout: false, returnStderr: true, script: "\$tmpResult = New-Item -Path ${chromeDirectory}\\${tmpValue} -ItemType 'Directory'")
+						echo "Working Directory: ${tmpValue}"
+					}
+				}
+			}
+		}
+
+		// Download Artifact(s) from Artifactory
+		stage ('Artifactory: Download Chrome') {
+			steps {
+				dir ("${saveWorkspace}") {
+					script {
+						def downloadSpec = """{
+							"files": [
+		 						{
+ 								"pattern": "${artifactoryRep}/${softwarePackage}/${ChromeVersion}/${softwarePackage}-${ChromeVersion}.zip",
+	 							"target": "${chromeDirectory}/${tmpValue}/",
+								"flat": "true"
+ 								}
+	 						]
+	 					}"""
+
+						artServer.download spec: downloadSpec
+					}
+				}
+			}
+		}
+
+		// Setup directory & extract the Chrome software
+		stage ('Install Chrome') {
+			steps {
+				dir ("${saveWorkspace}") {
+					script {
+						// Use Powershell to expand Chrome release
+						powershell(returnStatus: true, returnStderr: true, script: "Set-Location ${chromeDirectory}; Expand-Archive -Path ${tmpValue}\\${softwarePackage}-${ChromeVersion}.zip \
+						  -DestinationPath ${chromeDirectory}\\${tmpValue}")
+
+						powershell(returnStatus: true, returnStderr: true, script: "Set-Location ${chromeDirectory}; Move-Item -Path ${tmpValue}\\${softwarePackage}-${ChromeVersion}\\* \
+							-Destination ${chromeDirectory}")
+
+						powershell(returnStatus: true, returnStdout: false, returnStderr: true, script: "\$tmpResult = New-Item -Path ${chromeDirectory}\\${logsDir} -ItemType 'Directory'")
+
+						powershell(returnStatus: true, returnStderr: true, script: "Set-Location ${chromeDirectory}; Remove-Item -Path ${tmpValue} \
+						  -Recurse -Force -ErrorAction SilentlyContinue")
+					}
+				}
+			}
+		}
+  	}
+
+	// Final cleanup after everything complete (including handling failures)
+	post {
+		always {
+			echo "Wait for Final Output"
+			sleep 10
+		}
+	}
+}
+=======
+/*
+ @GIT$Format:[%h] %ci %cn - %s$
+
+ Jenkins Continuous Integration Pipeline as Code script to run the Chrome
+ install 
+
+ Author
+  Evangelo Rosal with reference from Craig Butler's patterns
+
+ Usage
+  Called by the Jenkins CI platform agent(s)
+*/
+// Load common variables & functions
+def common = 'jenkins/lib/testCommon.groovy'
+def saveWorkspace = ''
+
+// Artifactory connection required for the build process
+def artifactoryRep = 'mebank-software-releases-local'
+def softwarePackage = 'Chrome_Studio_Windows_64'
+def chromeDirectory = 'D:\\Applications\\Chrome'
+
+pipeline {
+	agent { node { label "${tasAgent}" } } 
+
+	stages {
+		// Initialise & remove temporary files & folders before starting
+		stage ('Init') {
+			steps {
+				script {
+					saveWorkspace = "${WORKSPACE}"
+					common = load common						// Load common functions & variables
+
+					artServer = Artifactory.server "${artifactoryServer}"
+					artServer.credentialsId = artifactoryCredentials
+
+					echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL} - Workspace ${saveWorkspace}"
+				}
+			}
+		}
+
+		// Setup directory 
+		stage ('Setup Chrome Base') {
+			steps {
+				dir ("${saveWorkspace}") {
+					script {
+						// Use Powershell to delete & create Chrome directories (base & working)
+						powershell(returnStatus: true, returnStderr: true, script: "Remove-Item -Path ${chromeDirectory} \
+						  -Recurse -Force -ErrorAction SilentlyContinue")
+
+						powershell(returnStatus: true, returnStdout: false, returnStderr: true, script: "\$tmpResult = New-Item -Path ${chromeDirectory}\\${tmpValue} -ItemType 'Directory'")
+						echo "Working Directory: ${tmpValue}"
+					}
+				}
+			}
+		}
+
+		// Download Artifact(s) from Artifactory
+		stage ('Artifactory: Download Chrome') {
+			steps {
+				dir ("${saveWorkspace}") {
+					script {
+						def downloadSpec = """{
+							"files": [
+		 						{
+ 								"pattern": "${artifactoryRep}/${softwarePackage}/${ChromeVersion}/${softwarePackage}-${ChromeVersion}.zip",
+	 							"target": "${chromeDirectory}/${tmpValue}/",
+								"flat": "true"
+ 								}
+	 						]
+	 					}"""
+
+						artServer.download spec: downloadSpec
+					}
+				}
+			}
+		}
+
+		// Setup directory & extract the Chrome software
+		stage ('Install Chrome') {
+			steps {
+				dir ("${saveWorkspace}") {
+					script {
+						// Use Powershell to expand Chrome release
+						powershell(returnStatus: true, returnStderr: true, script: "Set-Location ${chromeDirectory}; Expand-Archive -Path ${tmpValue}\\${softwarePackage}-${ChromeVersion}.zip \
+						  -DestinationPath ${chromeDirectory}\\${tmpValue}")
+
+						powershell(returnStatus: true, returnStderr: true, script: "Set-Location ${chromeDirectory}; Move-Item -Path ${tmpValue}\\${softwarePackage}-${ChromeVersion}\\* \
+							-Destination ${chromeDirectory}")
+
+						powershell(returnStatus: true, returnStdout: false, returnStderr: true, script: "\$tmpResult = New-Item -Path ${chromeDirectory}\\${logsDir} -ItemType 'Directory'")
+
+						powershell(returnStatus: true, returnStderr: true, script: "Set-Location ${chromeDirectory}; Remove-Item -Path ${tmpValue} \
+						  -Recurse -Force -ErrorAction SilentlyContinue")
+					}
+				}
+			}
+		}
+  	}
+
+	// Final cleanup after everything complete (including handling failures)
+	post {
+		always {
+			echo "Wait for Final Output"
+			sleep 10
+		}
+	}
+}
+
+====================================================================================================================
+Katalon-Install-1.pac
+
+/*
+ @GIT$Format:[%h] %ci %cn - %s$
+
+ Jenkins Continuous Integration Pipeline as Code script to run the Katalon
+ install 
+
+ Author
+  Craig Butler
+
+ Usage
+  Called by the Jenkins CI platform agent(s)
+*/
+// Load common variables & functions
+def common = 'jenkins/lib/testCommon.groovy'
+def saveWorkspace = ''
+
+// Artifactory connection required for the build process
+def artifactoryRep = 'mebank-software-releases-local'
+def softwarePackage = 'Katalon_Studio_Windows_64'
+def katalonDirectory = 'D:\\Applications\\Katalon'
+
+pipeline {
+	agent { node { label "${tasAgent}" } } 
+
+	stages {
+		// Initialise & remove temporary files & folders before starting
+		stage ('Init') {
+			steps {
+				script {
+					saveWorkspace = "${WORKSPACE}"
+					common = load common						// Load common functions & variables
+
+					artServer = Artifactory.server "${artifactoryServer}"
+					artServer.credentialsId = artifactoryCredentials
+
+					echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL} - Workspace ${saveWorkspace}"
+				}
+			}
+		}
+
+		// Setup directory 
+		stage ('Setup Katalon Base') {
+			steps {
+				dir ("${saveWorkspace}") {
+					script {
+						// Use Powershell to delete & create Katalon directories (base & working)
+						powershell(returnStatus: true, returnStderr: true, script: "Remove-Item -Path ${katalonDirectory} \
+						  -Recurse -Force -ErrorAction SilentlyContinue")
+
+						powershell(returnStatus: true, returnStdout: false, returnStderr: true, script: "\$tmpResult = New-Item -Path ${katalonDirectory}\\${tmpValue} -ItemType 'Directory'")
+						echo "Working Directory: ${tmpValue}"
+					}
+				}
+			}
+		}
+
+		// Download Artifact(s) from Artifactory
+		stage ('Artifactory: Download Katalon') {
+			steps {
+				dir ("${saveWorkspace}") {
+					script {
+						def downloadSpec = """{
+							"files": [
+		 						{
+ 								"pattern": "${artifactoryRep}/${softwarePackage}/${katalonVersion}/${softwarePackage}-${katalonVersion}.zip",
+	 							"target": "${katalonDirectory}/${tmpValue}/",
+								"flat": "true"
+ 								}
+	 						]
+	 					}"""
+
+						artServer.download spec: downloadSpec
+					}
+				}
+			}
+		}
+
+		// Setup directory & extract the Katalon software
+		stage ('Install Katalon') {
+			steps {
+				dir ("${saveWorkspace}") {
+					script {
+						// Use Powershell to expand Katalon release
+						powershell(returnStatus: true, returnStderr: true, script: "Set-Location ${katalonDirectory}; Expand-Archive -Path ${tmpValue}\\${softwarePackage}-${katalonVersion}.zip \
+						  -DestinationPath ${katalonDirectory}\\${tmpValue}")
+
+						powershell(returnStatus: true, returnStderr: true, script: "Set-Location ${katalonDirectory}; Move-Item -Path ${tmpValue}\\${softwarePackage}-${katalonVersion}\\* \
+							-Destination ${katalonDirectory}")
+
+						powershell(returnStatus: true, returnStdout: false, returnStderr: true, script: "\$tmpResult = New-Item -Path ${katalonDirectory}\\${logsDir} -ItemType 'Directory'")
+
+						powershell(returnStatus: true, returnStderr: true, script: "Set-Location ${katalonDirectory}; Remove-Item -Path ${tmpValue} \
+						  -Recurse -Force -ErrorAction SilentlyContinue")
+					}
+				}
+			}
+		}
+  	}
+
+	// Final cleanup after everything complete (including handling failures)
+	post {
+		always {
+			echo "Wait for Final Output"
+			sleep 10
+		}
+	}
+}
+
+
+========================================================================================================================
+runTestCollection-1.pac
+
+/*
+ @GIT$Format:[%h] %ci %cn - %s$
+
+ Jenkins Continuous Integration Pipeline as Code script to run the Katalon
+ install
+
+ Author
+  Craig Butler
+
+ Usage
+  Called by the Jenkins CI platform agent(s)
+*/
+
+// Load global variables & common functions
+@Library('DevOps-Common') _ ; commonLib()
+
+// Load common test variables & functions
+def testCommonLib = 'jenkins/lib/testCommon.groovy'
+def saveWorkspace = ''
+
+def collectionPathBase = "testSuites"
+def latestReport = ""
+def testCaseCredentialsServiceUser = 'testCaseCredentialsServiceUser'
+
+def t24UpgradeProjectFile = 'T24 Upgrade.prj'
+def t24ExecProfile = 'default'
+def apiURLProtocol = 'https'
+def apiURLPort = '8445' 		//TODO: can be hash-mapped
+def uiURLProtocol = 'https' 	//added for UI Browserweb URL
+def uiURLPort = '8444' 			//added for UI Browserweb URL - TODO: can be hash-mapped
+def uiURLSuffix = 'BrowserWeb/servlet/BrowserServlet'
+//def jiraFlag = 'Yes'
+
+pipeline {
+	agent { node { label "${tasAgent}" } }
+
+	stages {
+		// Initialise & remove temporary files & folders before starting
+		stage ('Init') {
+			steps {
+				script {
+					saveWorkspace = "${WORKSPACE}"
+					testCommonLib = load testCommonLib			// Load common test functions & variables
+
+					artServer = Artifactory.server "${artifactoryServer}"
+					artServer.credentialsId = artifactoryCredentials
+
+					echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL} - Workspace ${saveWorkspace}"
+
+					powershell(returnStatus: true, returnStdout: false, returnStderr: true, \
+						script: "\$tmpResult = New-Item -Path ${katalonDirectory}\\${workDir}\\${tmpValue} -ItemType Directory")
+
+					echo "Working Directory: ${workDir}\\${tmpValue}"
+				}
+			}
+		}
+
+		// Get Testsuite(s) from Artifactory & expand
+		stage ('Get Test Collection(s)') {
+			steps {
+				dir ("${saveWorkspace}") {
+					script {
+						echo "Downloading testsuite from ${artifactoryRep}/${testSuiteList}"
+						def downloadSpec = """{
+							"files": [
+		 						{
+ 								"pattern": "${artifactoryRep}/${testSuiteList}.zip",
+	 							"target": "${katalonDirectory}\\${workDir}\\${tmpValue}/",
+								"flat": "true"
+ 								}
+	 						]
+	 					}"""
+
+						artServer.download spec: downloadSpec
+
+						// Use Powershell to create a directory & extract software
+						def psResult = 0
+						psResult = powershell(returnStatus: true, returnStderr: true, \
+							script: "Expand-Archive -Path ${katalonDirectory}\\${workDir}\\${tmpValue}\\${testSuiteList}.zip \
+							-DestinationPath ${katalonDirectory}\\${workDir}\\${tmpValue}")
+
+						if (psResult != 0) {
+							error("(E)-Expand-Archive(): BUILD FAILED - Error expanding archive: ${testSuiteList}.zip")
+						}
+					}
+				}
+			}
+		}
+
+		// Run Katalon test case(s)
+		stage ('Run Test Collection(s)') {
+			steps {
+				withCredentials([usernamePassword(credentialsId: "${testCaseCredentialsServiceUser}", passwordVariable: 'testPassword', \
+				  usernameVariable: 'testUsername')]) {
+					dir ("${saveWorkspace}") {
+						script {
+							"${testCollectionType}".split(',').each { collectionItem ->
+								testResult = testCommonLib.runTestCollection(testSuiteList: "${testSuiteList}", \
+								collectionName: "${collectionItem}", \
+								executionProfile: "${t24ExecProfile}", \
+								apiURL: "${apiURLProtocol}://${t24Hostname}:${apiURLPort}", \
+								uiURL: "${uiURLProtocol}://${t24Hostname}:${uiURLPort}/${uiURLSuffix}", \
+								jiraFlag: "${jiraFlag}", \
+								testUsername: "${testUsername}", \
+								testPassword: "${testPassword}", \
+								hostName: "${t24Hostname}", \
+								projectPath: "${katalonDirectory}\\${workDir}\\${tmpValue}\\${t24UpgradeProjectFile}")
+
+								//printf("${logsDir}\\${testSuiteList}.${env.BUILD_ID}.log")
+								
+								if (testResult != 0) {
+									error("(E)-runTestSuite(): BUILD FAILED - Katalon error status: ${psResult}, stdOut: ${logsDir}\\${testSuiteList}.${env.BUILD_ID}.log, \
+							  		  stdErr: ${logsDir}\\${testSuiteList}.${env.BUILD_ID}.err")
+								} else {
+									echo("(I)-runTestSuite(): Complete, stdOut: ${logsDir}\\${testSuiteList}.${env.BUILD_ID}.log, stdErr: ${logsDir}\\${testSuiteList}.${env.BUILD_ID}.err")
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Publish reports & cleanup
+		stage ('Publish Result(s)') {
+			steps {
+				dir ("${saveWorkspace}") {
+					script {
+						publishResult = testCommonLib.publishTestResults(resultsPath: "${workDir}\\${tmpValue}")
+					}
+				}
+			}
+		}
+	}
+
+	// Final cleanup after everything complete (including handling failures)
+	post {
+		always {
+			script {
+				// commonLib.sendEmail(recipientList: "Craig.Butler@mebank.com.au")   // Send always for now
+				commonLib.sendEmail()   // Send always for now
+				sleep 5
+			}
+		}
+	}
+}
+
+=============================================================================================================================
+Testcase-Deploy-1.pac
+
+/*
+ @GIT$Format:[%h] %ci %cn - %s$
+
+ Jenkins Continuous Integration Pipeline as Code script to run the Katalon
+ install 
+
+ Author
+  Craig Butler
+
+ Usage
+  Called by the Jenkins CI platform agent(s)
+*/
+
+// Load common variables & functions
+def common = 'jenkins/lib/testCommon.groovy'
+def saveWorkspace = ''
+
+def artifactoryRep = 'mebank-katalon-testsuites-local'
+
+// Artifactory connection required for the build process
+def artifactoryCredentials = 'katalondeployCredentials'
+
+pipeline {
+	agent { node { label "${tasAgent}" } } 
+	// agent { node { label "master" } } 
+
+	stages {
+		// Initialise & remove temporary files & folders before starting
+		stage ('Init') {
+			steps {
+				script {
+					saveWorkspace = "${WORKSPACE}"
+					common = load common				// Load common functions & variables
+
+					artServer = Artifactory.server "${artifactoryServer}"
+					artServer.credentialsId = artifactoryCredentials
+
+					echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL} - Workspace ${saveWorkspace}"
+				}
+			}
+		}
+
+		// Create temporary zip file of test suite(s) for uploading into Artifactory
+		stage ('Create Archive') {
+			steps {
+				dir ("${saveWorkspace}") {
+					script {
+						zipStatus = powershell(returnStatus: true, script: "git archive --format zip --output ${tmpValue}.zip HEAD")
+
+						// Fail the build if zip not successful
+						if (zipStatus != 0) {
+							error("(E)-createArchive(): BUILD FAILED - Create archive command failure")
+						}
+					}
+				}
+			}
+		}
+
+		// Upload Artifact(s) to Artifactory
+		stage ('Artifactory: Upload Artifact(s)') {
+			steps {
+				dir ("${saveWorkspace}") {
+					echo "Uploading artifact(s) to ${artifactoryRep}"
+					script {
+						def uploadSpec = """{
+							"files": [
+								{
+									"pattern": "${tmpValue}.zip",
+									"target": "${artifactoryRep}/${testsuiteName}-${testsuiteVersion}.zip"
+								}
+							]
+						}"""
+
+						def buildInfo = Artifactory.newBuildInfo()
+						buildInfo.env.capture = true
+
+						artServer.upload spec: uploadSpec, buildInfo: buildInfo
+
+						powershell(returnStatus: true, returnStderr: true, script: "Remove-Item -Path ${tmpValue}.zip \
+						  -Force -ErrorAction SilentlyContinue")
+					}
+				}
+			}
+		}
+  	}
+
+	// Final cleanup after everything complete (including handling failures)
+	post {
+		always {
+			echo "Wait for Final Output"
+			sleep 5
+		}
+	}
+}
+
+========================================================================================================================
+README.md
+
+README FILE FOR KATALON - Always remember to check the Project properties (via Profiles)
+Katalon    Jenkins    Artifactory    PowerShell    JIRA
+
+Author
+Created by Evangelo Rosal
+
+Description
+Katalon, Jenkins, JIRA, PowerShell and Groovy code used to automate the installation, design, & execution of the automated functional tests scripts.
+
+Certified Platforms
+The following platforms are certified for use with the solution:
+
+Platform Type	Vendor	Version
+Katalon Studios	Katalon LLC	6.1.4
+Operating System	Microsoft Windows	2016 64-bit
+Java VM	Oracle Java	1.8
+#Katalon Documentation Repository Tips, tricks, and detailed information on how to use the automation tool - https://docs.katalon.com/katalon-studio/docs/index.html Package and Class libraries - https://api-docs.katalon.com/index.html
+
+JIRA Repository
+All test cases are automatically designed & executed in JIRA (Zephyr plug-in) - https://jira.membersequity.com.au The successful integration with JIRA can only be run via the TAS server: tasinf0001vt.metest.local
+
+Artifact Repository
+All artifacts are stored and maintained in jFrog Artifactory - http://jenapp0001vi.metest.local:8081/artifactory
+
+Jenkins Repository
+All pipelines and scheduled jobs are configured in BAU Jenkins - https://jenapp0002vi.metest.local:8443
+
+Folder information
+/Images - Images used by this README.md file
+/Jenkins - Groovy scripts used for the Jenkins Pipeline as Code files
+/Data Files - Test data master sheets used for data-driven testing (https://docs.katalon.com/katalon-studio/tutorials/data_driven_testing.html#what-is-data-driven-testing)
+/Drivers - External libraries (JAR files) that are not built-in inside the tool (https://docs.katalon.com/katalon-studio/tutorials/import_java_library.html#using-katalon-project-settings)
+/Include - (not currently utilised as we haven't implemented BDD framework) Cucumber Features files (https://docs.katalon.com/katalon-studio/docs/cucumber-features-file.html#overview)
+/Keywords - User-defined custom keywords (https://docs.katalon.com/katalon-studio/docs/introduction-to-custom-keywords.html)
+/Object Repository - Test objects for both UI (Web elements & API (Web services) (https://docs.katalon.com/katalon-studio/docs/manage-test-object.html#create-a-test-object)
+/Profiles - Configuration / Global variables to cover multiple and different environments (https://docs.katalon.com/katalon-studio/docs/execution-profile-v54.html)
+/Scripts - Automation groovy scripts
+/Test Cases - Collection of keywords and actions forming as test steps via manual and script mode (https://docs.katalon.com/katalon-studio/docs/manual-view.html)
+/Test Listeners - Contains test steps that are created based on pre-defined criterias and will be executed when the condition is matched (https://docs.katalon.com/katalon-studio/docs/test-listeners-test-hooks.html)
+/Test Suites - Collection of multiple test cases (https://docs.katalon.com/katalon-studio/docs/test-suite.html)
+Configuration File(s)
+default.glbl - Configuration of project-specific parameters
+
+Inventory
+D:/Application/Katalon/report
+
+BAU Jobs
+Jenkins Job Name	Jenkins Pipeline Script	Description
+TAS - Katalon Install	Katalon-Install-1.pac	Pipeline job to install the Katalon automation tool
+TAS - Katalon Deploy Testsuite to Artifactory	Testcase-Deploy-1.pac	Pipeline job to deploy the latest version of source code to Artifactory
+TAS - Run Test Collection	runTestCollection-1.pac	Pipeline job to execute the test suite collection designed via Katalon
+Version Information
+0.1 - Initial Version
+
+END README EXAMPLE
+How to Configure Git for the first time
+git config --global user.name "BITBUCKET_USER"
+git config --global user.email "BITBUCKET USER EMAIL ADDRESS"
+
+Working with your repository
+I just want to clone this repository
+If you want to simply clone this repository then run this command in your terminal.
+
+git clone https://bitbucket.metest.local:8443/scm/trt/automation_functional.git
+
+My code is ready to be pushed
+If you already have code ready to be pushed to this repository then run this in your terminal.
+
+cd existing-project
+git init
+git add --all
+git commit -m "Initial Commit"
+git remote add origin https://bitbucket.metest.local:8443/scm/trt/automation_functional.git
+git push -u origin master
+
+My code is already tracked by Git
+If your code is already tracked by Git then set this repository as your "origin" to push to.
+
+cd existing-project
+git remote set-url origin https://bitbucket.metest.local:8443/scm/trt/automation_functional.git
+git push -u origin --all
+git push origin --tags
+
+==================================================================================================
+testCommon.groovy
+
+/*
+ @GIT$Format:[%h] %ci %cn - %s$
+
+ Jenkins Continuous Integration Pipeline common library to define common functions and
+ variables & to provide access to the Personality
+
+ Author
+  Craig Butler
+
+ Usage
+  Called by the Jenkins CI platform agent(s)
+*/
+import groovy.json.JsonSlurperClassic
+
+artifactoryCredentials = 'readonlyCredentials'
+
+// Number of times to retry connection for Verify Online
+connectRetryLimit = 10
+
+// Artifactory connection settings
+artifactoryServer = 'artifactory'
+artifactoryTimeout = 30
+artifactoryRep = 'mebank-katalon-testsuites-local'
+
+// Standard Katalon location(s)
+katalonDirectory = 'D:\\Applications\\Katalon'
+collectionPathBase = "Test Suites"
+resultsDirectory = 'testResults'
+resultsPrefix = 'testResults'
+reportsDirectory = 'reports'
+jUnitReportName = 'JUnit_Report.xml'
+
+// Working directory for projects
+workDir = 'work'
+
+// Standard directory for log files
+logsDir = 'logs'
+logTimestamp = new Date().format("YYMMdd-HHmm")
+
+// Number of days to retain working directories
+workDirRetentionDays = 5
+
+// Generate a random string for general usage
+tmpValue = "t-" + org.apache.commons.lang.RandomStringUtils.random(10, true, true)
+
+def getOSType() {
+ 	if (isUnix()) {
+    	def uname = sh script: 'uname', returnStdout: true
+    	if (uname.startsWith("Darwin")) {
+        	return "MacOSX"
+    	}
+    	// Optionally add 'else if' for other Unix OS
+    	else {
+        	return "Linux"
+    	}
+ 	}
+ 	else {
+     	return "Windows"
+ 	}
+}
+
+return this
+
+/*
+  Function to call the Katalon batch console mode to run a test suite using the specified
+  map arguments. The Katalon executable is called via PowerShell from Jenkins.
+  Inputs:
+        map: arguments to the function
+  Returns:
+        PowerShell return code
+*/
+
+def runTestCollection(HashMap args = [:].withDefault {}) {
+
+	echo "(I)-runTestCollection(): ${args.testSuiteList} - collectionName: '${args.collectionName}' - hostName: ${args.hostName}"
+
+	psResult = powershell(returnStatus: true, returnStderr: true, script: "Set-Location ${katalonDirectory} ; \
+	  Start-Process PowerShell.exe \".\\katalon -noSplash -runMode=console \
+	  -projectPath='${katalonDirectory}\\${workDir}\\${tmpValue}\\T24 Upgrade.prj' \
+	  -retry=0 \
+	  -testSuiteCollectionPath='${collectionPathBase}\\${args.collectionName}' \
+	  -executionProfile='${args.executionProfile}' \
+	  --config -proxy.options=USE_SYSTEM \
+	  -g_t24R18ApiUsername='${args.testUsername}' \
+	  -g_t24R18ApiPassword='${args.testPassword}' \
+	  -g_t24R18ApiUrl='${args.apiURL}' \
+	  -g_t24R18UiUrl='${args.uiURL}' \
+	  -g_jenkinsJobId='${env.BUILD_ID}' \
+      -g_jiraFlag='${args.jiraFlag}' \
+	  -reportFolder='${resultsDirectory}' \
+	  -reportFileName='index'\" \
+	  -Wait \
+	  -NoNewWindow \
+	")
+	
+	return psResult
+}
+return this
+
+//	  -RedirectStandardOutput ${logsDir}\\${args.testSuiteList}.${env.BUILD_ID}.${logTimestamp}.log \
+//	  -RedirectStandardError ${logsDir}\\${args.testSuiteList}.${env.BUILD_ID}.${logTimestamp}.err
+
+/*TODO: Might need to include this as powershell script after the katalon command
+    \".\\set exitCode=%ERRORLEVEL%\" \
+    \".\\exit /B %exitCode%\" \
+*/
+/*
+  Function to publish testing results and cleanup old working directories (> n days old). The publishHTML
+  & junit plugins are used to publish the results
+  Inputs:
+        args.resultsPath: Directory containing test execution reports
+		$BUILD_ID: Jenkins environment parameter containing ID of the build
+  Returns:
+        PowerShell return code
+*/
+
+def publishTestResults(HashMap args = [:].withDefault {}) {
+
+	echo "(I)-publishTestResults(): reportsDirectory: ${katalonDirectory}\\${args.resultsPath}\\${resultsDirectory}"
+
+	psResult = powershell(returnStatus: true, returnStdout: false, returnStderr: true,
+	  script: "\$tmpResult = New-Item -Path \"${katalonDirectory}\\${reportsDirectory}\" -ItemType Directory -ErrorAction SilentlyContinue")
+
+	// Move report to Jenkins Slave workspace under Reports\Reports.${BUILD_ID}.${logTimestamp}
+	psResult = powershell(returnStatus: true, returnStdout: false, returnStderr: true,
+	  script: "Set-Location ${katalonDirectory}; Move-Item -Path \"${args.resultsPath}\\${reportsDirectory}\" -Destination '${reportsDirectory}\\Reports.${env.BUILD_ID}.${logTimestamp}' -Force")
+
+	// Get directory containing testing results (*NB: Assume starts with 20 [century])
+	resultsDir = (powershell(returnStatus: false, returnStdout: true, returnStderr: false,
+	  script: "Set-Location ${katalonDirectory}; Get-ChildItem -Path \"${args.resultsPath}\\${resultsDirectory}\\20*\" -Attributes Directory | % { \$_.Name }")).trim()
+
+  	// Publish jUnit results using plugin
+	dir ("${katalonDirectory}\\${args.resultsPath}\\${resultsDirectory}\\${resultsDir}") {
+		junit "${jUnitReportName}"
+	}
+
+	// Publish results to Jenkins
+	publishHTML (target: [
+      allowMissing: false,
+      alwaysLinkToLastBuild: false,
+      keepAll: true,
+      reportDir: "${katalonDirectory}\\${args.resultsPath}\\${resultsDirectory}\\${resultsDir}",
+      reportFiles: "index.html",
+      reportName: "Test Report for Build: ${env.BUILD_ID} (${logTimestamp})"
+    ])
+
+	// Cleanup old working directories
+	powershell(returnStatus: true, returnStdout: false, returnStderr: true,
+	  script: "\$tmpResult = Get-ChildItem -Path \"${katalonDirectory}\\${workDir}\" -Filter 't-*' | Where CreationTime -lt (Get-Date).AddDays(-${workDirRetentionDays}) \
+	  | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue")
+
+	return psResult
+}
+return this
